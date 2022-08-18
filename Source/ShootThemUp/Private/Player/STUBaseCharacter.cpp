@@ -5,6 +5,8 @@
 #include "Components/InputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Player/Components/STUHealthComponent.h"
+#include "Components/TextRenderComponent.h"
 
 // Sets default values
 ASTUBaseCharacter::ASTUBaseCharacter()
@@ -18,21 +20,28 @@ ASTUBaseCharacter::ASTUBaseCharacter()
 	
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>("CameraComponent");
 	CameraComponent->SetupAttachment(SpringArmComponent);
-	
+
+	HealthComponent = CreateDefaultSubobject<USTUHealthComponent>("HealthComponent");
+	HealthTextComponent = CreateDefaultSubobject<UTextRenderComponent>("HealthTextComponent");
+	HealthTextComponent->SetupAttachment(GetRootComponent());
 }
 
 // Called when the game starts or when spawned
 void ASTUBaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	MaxWalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
+
+	check(HealthComponent);
+	check(HealthTextComponent);
 }
 
 // Called every frame
 void ASTUBaseCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	const auto Health = HealthComponent->GetHealth();
+	HealthTextComponent->SetText(FText::FromString(FString::Printf(TEXT("%.0f"),Health)));
 }
 
 // Called to bind functionality to input
@@ -53,6 +62,16 @@ void ASTUBaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	
 }
 
+float ASTUBaseCharacter::GetMovementDirection() const
+{
+	if(GetVelocity().IsZero()) return 0.0f;
+	const auto VelocityNormal = GetVelocity().GetSafeNormal();
+	const auto AngleBetween = FMath::Acos(FVector::DotProduct(GetActorForwardVector(), VelocityNormal));
+	const auto CrossProduct = FVector::CrossProduct(GetActorForwardVector(), VelocityNormal);
+	const auto Degrees = FMath::RadiansToDegrees(AngleBetween);
+	return CrossProduct.IsZero() ? Degrees : Degrees * FMath::Sign(CrossProduct.Z);
+}
+
 void ASTUBaseCharacter::MoveForward(float Amount)
 {
 	IsMoveForward = Amount > 0.0f;
@@ -65,6 +84,7 @@ void ASTUBaseCharacter::MoveForward(float Amount)
 
 void ASTUBaseCharacter::MoveRight(float Amount)
 {
+	if(Amount == 0.0f) return;
 	AddMovementInput(GetActorRightVector(), Amount);
 }
 
@@ -73,12 +93,12 @@ void ASTUBaseCharacter::StartRun()
 	if(IsMoveForward && !GetVelocity().IsZero())
 	{
 		IsRun = true;
-		GetCharacterMovement()->MaxWalkSpeed = 1200.0f;
+		GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed * RunModifier;
 	}
 }
 
 void ASTUBaseCharacter::EndRun()
 {
-	GetCharacterMovement()->MaxWalkSpeed = 600.0f;
+	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed;
 	IsRun = false;
 }
