@@ -12,6 +12,7 @@ class UCameraComponent;
 class USpringArmComponent;
 class USTUHealthComponent;
 class UTextRenderComponent;
+class UAnimMontage;
 
 UCLASS()
 class SHOOTTHEMUP_API ASTUBaseCharacter : public ACharacter
@@ -35,6 +36,18 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Components")
 	UTextRenderComponent* HealthTextComponent;
+
+	UPROPERTY(EditDefaultsOnly, Category="Animation")
+	UAnimMontage* DeathAnimMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category="Damage")
+	float LifeSpanOnDeath = 5.0f;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Damage")
+	FVector2D LandedDamageVelocity = FVector2D(900.0f, 1200.0f);
+
+	UPROPERTY(EditDefaultsOnly, Category="Damage")
+	FVector2D LandedDamage = FVector2D(10.0f, 100.0f);
 	
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -54,9 +67,6 @@ public:
 	
 private:
 	
-	UPROPERTY(EditDefaultsOnly, Category="Movement", meta=(ClampMin="2", ClampMax="10.0"))
-	int32 RunModifier = 1;
-
 	float MaxWalkSpeed;
 	bool IsMoveForward = false;
 	bool IsRun= false;
@@ -66,4 +76,13 @@ private:
 
 	void StartRun();
 	void EndRun();
+
+	void OnHealthChanged(float Health);
+	void OnDeath();
+
+	UPROPERTY(EditDefaultsOnly, Category="Movement", meta=(ClampMin="2", ClampMax="10.0"))
+	int32 RunModifier = 1;
+	
+	UFUNCTION()
+	void OnGroundLanded(const FHitResult& Hit);
 };
