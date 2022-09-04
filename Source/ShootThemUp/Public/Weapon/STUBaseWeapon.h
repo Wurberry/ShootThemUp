@@ -17,8 +17,8 @@ public:
 	ASTUBaseWeapon();
 
 protected:
-	// UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Components")
-	// USkeletalMeshComponent* WeaponMesh;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Components")
+	USkeletalMeshComponent* WeaponMesh;
 	
 	virtual void BeginPlay() override;
 

@@ -8,6 +8,7 @@
 #include "Player/Components/STUHealthComponent.h"
 #include "Components/TextRenderComponent.h"
 #include "GameFramework/Controller.h"
+#include "Weapon/STUBaseWeapon.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogBaseCharacter, All, All);
 
@@ -20,13 +21,17 @@ ASTUBaseCharacter::ASTUBaseCharacter()
 	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>("SpringArmComponent");
 	SpringArmComponent->SetupAttachment(GetRootComponent());
 	SpringArmComponent->bUsePawnControlRotation = true;
+	SpringArmComponent->TargetArmLength = 170.0f;
+	SpringArmComponent->SocketOffset = FVector(0.0f, 50.0f, 80.0f);
 	
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>("CameraComponent");
 	CameraComponent->SetupAttachment(SpringArmComponent);
 
 	HealthComponent = CreateDefaultSubobject<USTUHealthComponent>("HealthComponent");
+	
 	HealthTextComponent = CreateDefaultSubobject<UTextRenderComponent>("HealthTextComponent");
 	HealthTextComponent->SetupAttachment(GetRootComponent());
+	HealthTextComponent->SetOwnerNoSee(true);
 }
 
 // Called when the game starts or when spawned
@@ -44,6 +49,8 @@ void ASTUBaseCharacter::BeginPlay()
 	HealthComponent->OnHealthChanged.AddUObject(this, &ASTUBaseCharacter::OnHealthChanged);
 
 	LandedDelegate.AddDynamic(this, &ASTUBaseCharacter::OnGroundLanded);
+
+	SpawnWeapon();
 }
 
 // Called every frame
@@ -145,4 +152,14 @@ void ASTUBaseCharacter::OnGroundLanded(const FHitResult& Hit)
 	TakeDamage(FinalDamage, FDamageEvent{}, nullptr, nullptr);
 }
 
+void ASTUBaseCharacter::SpawnWeapon()
+{
+	if (!GetWorld()) return;
+	const auto Weapon = GetWorld()->SpawnActor<ASTUBaseWeapon>(WeaponClass);
 
+	if(Weapon)
+	{
+		FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, false);
+		Weapon->AttachToComponent(GetMesh(), AttachmentRules, "WeaponSocket");
+	}
+}
