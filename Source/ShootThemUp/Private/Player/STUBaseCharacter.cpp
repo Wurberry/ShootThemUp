@@ -7,6 +7,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Player/Components/STUHealthComponent.h"
 #include "Components/TextRenderComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Player/Components/STUWeaponComponent.h"
 #include "GameFramework/Controller.h"
 #include "Weapon/STUBaseWeapon.h"
@@ -144,6 +145,8 @@ void ASTUBaseCharacter::OnDeath()
 	{
 		Controller->ChangeState(NAME_Spectating);
 	}
+
+	GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 }
 
 void ASTUBaseCharacter::OnGroundLanded(const FHitResult& Hit)
